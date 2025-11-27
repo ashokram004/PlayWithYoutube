@@ -1,6 +1,7 @@
 import json
 import os
 import datetime
+import pytz
 import requests
 
 import firebase_admin
@@ -49,7 +50,10 @@ def main():
     # -----------------------------
     # Save to Firestore
     # -----------------------------
-    timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H:%M")
+    ist = pytz.timezone("Asia/Kolkata")
+
+    now_ist = datetime.datetime.now(ist)
+    timestamp = now_ist.strftime("%Y-%m-%d %I:%M %p")
 
     doc_ref = (
         db.collection("videos")
