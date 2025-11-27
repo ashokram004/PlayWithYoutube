@@ -1,8 +1,8 @@
 name: PlayWithYoutube
 
 on:
-  schedule:
-    - cron: "37 * * * *"   # runs every hour
+  #schedule:
+  #  - cron: "37 * * * *"   # runs every hour
   workflow_dispatch:      # allows manual run
 
 jobs:
