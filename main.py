@@ -10,8 +10,10 @@ from firebase_admin import credentials, firestore
 # -----------------------------
 # CONFIG
 # -----------------------------
-VIDEO_ID = "vVDp1ulBKIk"  # <--- change this anytime to track another video
-
+VIDEO_IDS = [
+        "vVDp1ulBKIk",
+        "l2vB4qovRoE"
+    ]
 
 def main():
     # -----------------------------
@@ -25,52 +27,56 @@ def main():
 
     db = firestore.client()
 
-    # -----------------------------
-    # Call YouTube API
-    # -----------------------------
     api_key = os.environ["YOUTUBE_API_KEY"]
 
-    url = "https://www.googleapis.com/youtube/v3/videos"
-    params = {
-        "part": "snippet,statistics",
-        "id": VIDEO_ID,
-        "key": api_key
-    }
-
-    response = requests.get(url, params=params).json()
-    item = response["items"][0]
-
-    title = item["snippet"]["title"]
-    stats = item["statistics"]
-
-    views = int(stats.get("viewCount", 0))
-    likes = int(stats.get("likeCount", 0))
-    comments = int(stats.get("commentCount", 0))
-
     # -----------------------------
-    # Save to Firestore
+    # IST timestamp
     # -----------------------------
     ist = pytz.timezone("Asia/Kolkata")
-
     now_ist = datetime.datetime.now(ist)
     timestamp = now_ist.strftime("%Y-%m-%d %I:%M %p")
 
-    doc_ref = (
-        db.collection("videos")
-          .document(VIDEO_ID)
-          .collection("stats")
-          .document(timestamp)
-    )
+    # -----------------------------
+    # Loop through each video
+    # -----------------------------
+    for video_id in VIDEO_IDS:
 
-    doc_ref.set({
-        "title": title,
-        "views": views,
-        "likes": likes,
-        "comments": comments,
-        "timestamp": timestamp
-    })
+        url = "https://www.googleapis.com/youtube/v3/videos"
+        params = {
+            "part": "snippet,statistics",
+            "id": video_id,
+            "key": api_key
+        }
 
-    print("Saved stats at:", timestamp)
+        response = requests.get(url, params=params).json()
+        item = response["items"][0]
+
+        title = item["snippet"]["title"]
+        stats = item["statistics"]
+
+        views = int(stats.get("viewCount", 0))
+        likes = int(stats.get("likeCount", 0))
+        comments = int(stats.get("commentCount", 0))
+
+        # Firestore path:
+        # videos/{videoId}/stats/{timestamp}
+        doc_ref = (
+            db.collection("videos")
+              .document(video_id)
+              .collection("stats")
+              .document(timestamp)
+        )
+
+        doc_ref.set({
+            "title": title,
+            "views": views,
+            "likes": likes,
+            "comments": comments,
+            "timestamp": timestamp
+        })
+
+        print(f"Saved stats for {video_id} at: {timestamp}")
+
 
 
 if __name__ == "__main__":
